@@ -21,11 +21,16 @@
 			var d1 = new Date();
 
 			// $("#mturk_form").hide();
+			$("#endPractice").hide();
 			// runStart = d1.getTime(); //gets the time from d1
+
+			var checkResponse = 2;
+			var timeoutHandle = null;
 
 			function runTrial(){
 				
 				if(counter < trialNum){
+					
 					switch(word[counter]){
 						case 1:
 							$("#s").text("RED");
@@ -49,45 +54,95 @@
 							$("#s").css("color","yellow");
 							break;
 					}
+					
 					$("#s").show();
+					checkResponse = true;
 
 					d1 = new Date();
 					onset = d1.getTime() - runStart;
 					data[logCounter] = ["P:", onset, color[counter], word[counter]];
 					logCounter++;
 
-					setTimeout(showITI,1000); 
+					timeoutHandle = setTimeout(showITI,1000); 
 					// 2 parameters in setTimeout
 					counter++;
+				
 				}else{
+				
 					$("#s").css("font-size", "20px");
 					$("#s").css("color", "white");
 					$("#s").text(data.join(";"));
 					$("#s").show();
 
 					// $("#mturk_form").show();
+					$("endPractice").show();
 					// $("#logs").val(data.join(";"));
-					$("#logs", opener.window.document).val(data.join(";"));
-					opener.updateMainMenu(3);
-					JavaScript:window.close();
-
 				}
 			}
 
 			function showITI(){
+				
 				$("#s").hide();
-				setTimeout(runTrial,2000);
+				timeoutHandle = setTimeout(noResponseFeedback,2000);
+			
+			}
+
+			function showFeedback(isCorrect){
+				
+				$("#s").show();
+				$("#s").css("color", "white");
+				
+				if(isCorrect){
+					$("#s").text("Correct");
+				}else{
+					$("#s").text("Incorrect");
+				}
+
+				setTimeout(showITI2, 1000);
+			}
+
+			function noResponseFeedback(){
+				
+				checkResponse = false;
+
+				$("#s").show();
+				$("#s").css("color", "white");
+				$("#s").text("No response");
+
+				setTimeout(showITI2, 1000);
+
+			}
+
+			function showITI2(){
+				
+				$("#s").hide();
+				setTimeout(runTrial, 2000);
+			
 			}
 
 			$("body").keypress(function(event){
-				var key = String.fromCharCode(event.which);
-				d1 = new Date();
-				data[logCounter] = [":R", key, d1.getTime()-runStart];
-				logCounter++;
+				if(checkResponse){
 
+					clearTimeout(timeoutHandle);
+					checkResponse = false; // it only detects the first response if there are multiple key presses
+					var key = String.fromCharCode(event.which);
+					d1 = new Date();
+					data[logCounter] = [":R", key, d1.getTime()-runStart];
+					logCounter++;
+
+					var ans = key[0] - '0';
+
+					// we are checking the response with the correct value
+					if(color[counter - 1] == ans){
+						showFeedback(true);
+					}else{
+						showFeedback(false);
+					}
+				}
 			});
 
 			function countDown(time){
+				
 				if(time > 0){
 					$("#s").text('' + time);
 					setTimeout(function(){countDown(time - 1)}, 1000);
@@ -114,25 +169,28 @@
 			}
 
 			$("#start").click(function(){
-				/*document.getElementById("assignmentId").value=gup("assignmentId", document.referrer);
-				document.getElementById("hitId").value=gup("hitId", document.referrer);
-				document.getElementById("workerId").value=gup("workerId", document.referrer);
+				// document.getElementById("assignmentId").value=gup("assignmentId", document.referrer);
+				// document.getElementById("hitId").value=gup("hitId", document.referrer);
+				// document.getElementById("workerId").value=gup("workerId", document.referrer);
 			
-				if(document.getElementById("assignmentId").value=="" || document.getElementById("assignmentId").value=="ASSIGNMENT_ID_NOT_AVAILABLE"){
-					$("#s").text("Please accept HIT first");
-					$("#start").hide();
+				// if(document.getElementById("assignmentId").value=="" || document.getElementById("assignmentId").value=="ASSIGNMENT_ID_NOT_AVAILABLE"){
+				// 	$("#s").text("Please accept HIT first");
+				// 	$("#start").hide();
 				
-				}else{
-					$("#start").hide();
-					countDown(3);
-				}*/
-
+				// }else{
+				// 	$("#start").hide();
+				// 	countDown(3);
+				// }
 				$("#start").hide();
 				countDown(3);
-
 			});
 
 			// runTrial();
+			$("#endPractice").click(function(){
+				opener.updateMainMenu(1);
+				JavaScript:window.close();
+
+			});
 		});
 
 	</script>
@@ -153,6 +211,7 @@
 						<p style="font-size: 30px">Click to submit data</p>
 						<input id="submitButton" style="font-family: arial; color: black; font-size: 24px" type="submit" name="Finish" value="Submit">
 					</form> -->
+					<button id="endPractice" style="font-family: arial; font-size: 20px">Click to end practice</button>
 					</td>
 				</tr>
 			</table>
